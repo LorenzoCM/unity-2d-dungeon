@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerScript : MonoBehaviour
 {
     public float JumpForce;
     public float Speed;
     public GameObject BulletPrefab;
+    public CanvasManager CanvasManager;
 
     private Rigidbody2D Rigidbody2D;
     private Animator Animator;
@@ -15,6 +16,7 @@ public class PlayerMovement : MonoBehaviour
     private bool Grounded;
     private float LastShoot;
     public int Health = 100;
+    public float FallingThreshold = -5f;
 
     // Start is called before the first frame update
     void Start()
@@ -39,7 +41,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else Grounded = false;
 
-        if (Input.GetKeyDown(KeyCode.W) && Grounded)
+        if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) && Grounded)
         {
             Jump();
         }
@@ -47,7 +49,11 @@ public class PlayerMovement : MonoBehaviour
         {
             Shoot();
             LastShoot = Time.time;
-        }       
+        }
+        if (Rigidbody2D.velocity.y < FallingThreshold)
+        {
+            CanvasManager.GameFailed();
+        }
     }
 
     private void Jump()
@@ -73,7 +79,11 @@ public class PlayerMovement : MonoBehaviour
     public void Hit()
     {
         Health = Health - 10;
-        if (Health == 0) Destroy(gameObject);
+        if (Health == 0)
+        {
+            Destroy(gameObject);
+            CanvasManager.GameFailed();
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D other)
@@ -86,7 +96,8 @@ public class PlayerMovement : MonoBehaviour
         }
         if (other.gameObject.tag == "Finish")
         {
-            SceneManager.LoadScene("SampleScene");
+            CanvasManager.EndGame();
         }
     }
+
 }
